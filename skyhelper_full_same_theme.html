@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SkyHelper AI</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{
+    margin:0;
+    padding:0;
+    font-family: Arial, Helvetica, sans-serif;
+    background:#ececf3;
+  }
+  .stage{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+  }
+  .phone{
+    width:min(100%,720px);
+    aspect-ratio: 768 / 1536;
+    max-height:94vh;
+    border-radius:42px;
+    overflow:hidden;
+    position:relative;
+    background:
+      radial-gradient(circle at 50% 16%, rgba(255,255,255,.55), transparent 28%),
+      linear-gradient(180deg, #4e98ff 0%, #b8d6ff 38%, #edf6ff 68%, #f7fbff 100%);
+    box-shadow:0 26px 80px rgba(70,83,126,.18);
+    border:1px solid rgba(255,255,255,.85);
+  }
+  .status{
+    position:relative;
+    z-index:3;
+    padding:20px 22px 8px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    color:#fff;
+    font-size:18px;
+    font-weight:700;
+  }
+  .icons{display:flex;align-items:center;gap:8px}
+  .bar{display:inline-block;width:5px;border-radius:99px;background:#fff}
+  .b1{height:10px;opacity:.65}.b2{height:14px;opacity:.8}.b3{height:18px;opacity:.92}.b4{height:22px}
+  .wifi{
+    width:18px;height:12px;border-top:3px solid #fff;border-radius:50%;
+    position:relative; transform:translateY(2px);
+  }
+  .wifi:after{
+    content:"";position:absolute;left:50%;top:-1px;transform:translateX(-50%);
+    width:6px;height:6px;background:#fff;border-radius:50%;
+  }
+  .battery{
+    width:34px;height:18px;border:2px solid #fff;border-radius:6px;position:relative;
+  }
+  .battery:after{
+    content:"";position:absolute;right:-5px;top:4px;width:3px;height:8px;background:#fff;border-radius:2px;
+  }
+  .fill{
+    position:absolute;left:2px;top:2px;bottom:2px;width:72%;background:#fff;border-radius:3px;
+  }
+
+  .screen{
+    display:none;
+    position:relative;
+    z-index:3;
+    width:100%;
+    height:calc(100% - 46px);
+    padding:10px 22px 26px;
+  }
+  .screen.active{display:block}
+
+  .brand{
+    margin-top:16px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+    color:#fff;
+    font-size:clamp(28px,4vw,42px);
+    font-weight:900;
+    text-shadow:0 2px 10px rgba(0,0,0,.08);
+  }
+  .plane{font-size:clamp(38px,5vw,56px); transform:rotate(-14deg); line-height:1}
+  .question{
+    margin:42px 0 18px;
+    text-align:center;
+    font-size:clamp(26px,4vw,36px);
+    color:#223b6b;
+    font-weight:800;
+  }
+
+  .panel{
+    background:rgba(255,255,255,.9);
+    border-radius:30px;
+    box-shadow:0 18px 40px rgba(61,105,194,.18);
+    padding:28px;
+    border:1px solid rgba(255,255,255,.95);
+    width:min(100%,670px);
+    margin:0 auto;
+  }
+  .row-label{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:#7886a8;
+    font-size:clamp(18px,3vw,22px);
+    margin-bottom:14px;
+    text-align:left;
+  }
+  .paper{font-size:28px; line-height:1}
+  .input{
+    width:100%;
+    border:none;
+    outline:none;
+    background:#fcfcff;
+    border-radius:22px;
+    padding:20px 22px;
+    text-align:left;
+    color:#4f5d86;
+    font-size:clamp(17px,2.5vw,20px);
+    box-shadow: inset 0 0 0 2px #e2e7f3;
+  }
+  .example{
+    margin-top:12px;
+    background:#fcfcff;
+    border-radius:22px;
+    padding:18px 22px;
+    text-align:left;
+    color:#4f5d86;
+    font-size:clamp(16px,2.4vw,18px);
+    line-height:1.55;
+    box-shadow: inset 0 0 0 2px #e2e7f3;
+  }
+  .btn{
+    width:100%;
+    border:none;
+    border-radius:20px;
+    min-height:76px;
+    margin-top:18px;
+    font-size:clamp(22px,3vw,28px);
+    font-weight:900;
+    color:#fff;
+    cursor:pointer;
+    background:linear-gradient(180deg, #3a86ff 0%, #256fff 100%);
+    box-shadow:0 12px 28px rgba(43,108,237,.28);
+  }
+
+  .assistant{
+    width:min(100%,670px);
+    margin:38px auto 0;
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .robot{
+    width:32%;
+    min-width:150px;
+    transform:translateX(-8px);
+  }
+  .robot svg{
+    width:100%;
+    height:auto;
+    display:block;
+    filter:drop-shadow(0 14px 22px rgba(63,104,179,.18));
+  }
+  .bubble{
+    width:60%;
+    min-width:220px;
+    background:rgba(255,255,255,.93);
+    border-radius:28px;
+    box-shadow:0 18px 40px rgba(61,105,194,.15);
+    padding:20px 18px;
+    color:#4a587e;
+    font-size:clamp(17px,2.4vw,18px);
+    line-height:1.55;
+    position:relative;
+    text-align:left;
+    margin-bottom:34px;
+  }
+  .bubble:before{
+    content:"";
+    position:absolute;
+    left:-18px;
+    bottom:26px;
+    border:12px solid transparent;
+    border-right-color:rgba(255,255,255,.93);
+  }
+  .bubble strong{
+    display:block;
+    font-size:clamp(22px,2.8vw,24px);
+    color:#334b7c;
+    margin-bottom:8px;
+  }
+
+  .cloud-back,.cloud-front{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    pointer-events:none;
+  }
+  .cloud-back{
+    z-index:1;
+    height:25%;
+    opacity:.62;
+    filter:blur(2px);
+    background:
+      radial-gradient(circle at 20% 82%, rgba(255,255,255,.96) 0 12%, transparent 13%),
+      radial-gradient(circle at 52% 83%, rgba(255,255,255,.96) 0 14%, transparent 15%),
+      radial-gradient(circle at 83% 82%, rgba(255,255,255,.96) 0 12%, transparent 13%);
+  }
+  .cloud-front{
+    z-index:2;
+    height:22%;
+    opacity:.97;
+    background:
+      radial-gradient(circle at 7% 88%, rgba(255,255,255,.99) 0 8%, transparent 9%),
+      radial-gradient(circle at 18% 81%, rgba(255,255,255,.99) 0 12%, transparent 13%),
+      radial-gradient(circle at 31% 88%, rgba(255,255,255,.99) 0 8%, transparent 9%),
+      radial-gradient(circle at 48% 84%, rgba(255,255,255,.99) 0 13%, transparent 14%),
+      radial-gradient(circle at 64% 89%, rgba(255,255,255,.99) 0 8%, transparent 9%),
+      radial-gradient(circle at 80% 82%, rgba(255,255,255,.99) 0 12%, transparent 13%),
+      radial-gradient(circle at 94% 88%, rgba(255,255,255,.99) 0 8%, transparent 9%);
+  }
+
+  .top-pills{
+    width:min(100%,670px);
+    margin:4px auto 18px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .pill{
+    background:rgba(255,255,255,.9);
+    color:#365487;
+    padding:10px 14px;
+    border-radius:18px;
+    box-shadow:0 12px 24px rgba(61,105,194,.12);
+    font-size:15px;
+    font-weight:700;
+  }
+  .card{
+    width:min(100%,670px);
+    margin:0 auto;
+    background:rgba(255,255,255,.92);
+    border-radius:30px;
+    box-shadow:0 18px 40px rgba(61,105,194,.16);
+    padding:24px;
+  }
+  .card h2{
+    margin:0 0 16px;
+    color:#294679;
+    font-size:clamp(28px,3vw,32px);
+  }
+  .flight{
+    background:#f8fbff;
+    border-radius:22px;
+    padding:16px;
+    box-shadow: inset 0 0 0 2px #e1ebff;
+    margin-bottom:14px;
+    text-align:left;
+  }
+  .flight:last-child{margin-bottom:0}
+  .flight-top{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .flight h3{
+    margin:0;
+    color:#275099;
+    font-size:22px;
+  }
+  .price{
+    color:#236fff;
+    font-size:28px;
+    font-weight:900;
+  }
+  .meta{
+    margin-top:10px;
+    color:#5c719b;
+    font-size:16px;
+    line-height:1.7;
+  }
+  .why{
+    margin-top:12px;
+    background:#eef5ff;
+    border-radius:16px;
+    padding:12px 14px;
+    color:#36568f;
+    font-size:15px;
+    line-height:1.6;
+  }
+  .actions{
+    width:min(100%,670px);
+    margin:18px auto 0;
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .half{
+    flex:1 1 220px;
+    border:none;
+    border-radius:20px;
+    min-height:68px;
+    font-size:20px;
+    font-weight:900;
+    cursor:pointer;
+    color:#fff;
+    background:linear-gradient(180deg,#3a86ff 0%,#256fff 100%);
+    box-shadow:0 12px 28px rgba(43,108,237,.22);
+  }
+  .half.secondary{
+    background:linear-gradient(180deg,#8fbfff 0%,#5f9bff 100%);
+  }
+  .summary p,.summary li{
+    color:#445881;
+    font-size:18px;
+    line-height:1.7;
+    text-align:left;
+  }
+  .summary ul{padding-left:22px}
+  .note{
+    margin-top:16px;
+    background:#f5f9ff;
+    border-left:5px solid #4b92ff;
+    padding:14px 16px;
+    border-radius:14px;
+    font-size:16px;
+    color:#53698f;
+    text-align:left;
+  }
+  .saved-list{margin-top:18px}
+  .saved-item{
+    background:#f8fbff;
+    border-radius:18px;
+    padding:14px 16px;
+    box-shadow: inset 0 0 0 2px #e1ebff;
+    margin-bottom:10px;
+    color:#466089;
+    font-size:17px;
+    text-align:left;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone">
+    <div class="status">
+      <div>9:41</div>
+      <div class="icons">
+        <span class="bar b1"></span><span class="bar b2"></span><span class="bar b3"></span><span class="bar b4"></span>
+        <span class="wifi"></span>
+        <span class="battery"><span class="fill"></span></span>
+      </div>
+    </div>
+
+    <section id="home" class="screen active">
+      <div class="brand"><span class="plane">✈</span><span>SkyHelper AI</span></div>
+
+      <div class="question">Where do you want to travel?</div>
+
+      <div class="panel">
+        <div class="row-label"><span class="paper">📨</span><span>Type your request...</span></div>
+        <input id="requestInput" class="input" placeholder="Type your request..." />
+        <div class="example">Example: I want a flight to London<br>for 2 adults on 20 June</div>
+        <button class="btn" id="getFlightsBtn">Get Flights ✨</button>
+      </div>
+
+      <div class="assistant">
+        <div class="robot">
+          <svg viewBox="0 0 220 290" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="bodyWhite" x1="0" x2="1">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="100%" stop-color="#dbe8ff"/>
+              </linearGradient>
+              <linearGradient id="blueGlow" x1="0" x2="1">
+                <stop offset="0%" stop-color="#62c4ff"/>
+                <stop offset="100%" stop-color="#256fff"/>
+              </linearGradient>
+            </defs>
+
+            <circle cx="112" cy="18" r="9" fill="#8be9ff"/>
+            <rect x="108" y="26" width="8" height="22" rx="4" fill="#8be9ff"/>
+
+            <ellipse cx="112" cy="92" rx="66" ry="58" fill="url(#bodyWhite)" stroke="#b7c9f1" stroke-width="2"/>
+            <rect x="61" y="56" width="102" height="62" rx="28" fill="#203c6c"/>
+            <circle cx="89" cy="86" r="10" fill="#74ecff"/>
+            <circle cx="135" cy="86" r="10" fill="#74ecff"/>
+            <path d="M90 103 Q112 119 134 103" fill="none" stroke="#74ecff" stroke-width="5" stroke-linecap="round"/>
+
+            <circle cx="42" cy="78" r="16" fill="url(#blueGlow)"/>
+            <circle cx="182" cy="78" r="16" fill="url(#blueGlow)"/>
+
+            <rect x="74" y="144" width="76" height="85" rx="24" fill="url(#bodyWhite)" stroke="#b7c9f1" stroke-width="2"/>
+            <rect x="86" y="166" width="52" height="38" rx="8" fill="url(#blueGlow)"/>
+            <rect x="95" y="173" width="34" height="8" rx="4" fill="#d8f6ff"/>
+            <rect x="95" y="185" width="26" height="4" rx="2" fill="#d8f6ff"/>
+
+            <rect x="39" y="146" width="28" height="72" rx="14" fill="url(#bodyWhite)" stroke="#b7c9f1" stroke-width="2"/>
+            <rect x="159" y="142" width="28" height="72" rx="14" fill="url(#bodyWhite)" stroke="#b7c9f1" stroke-width="2" transform="rotate(16 173 178)"/>
+            <circle cx="39" cy="218" r="15" fill="url(#blueGlow)"/>
+            <circle cx="189" cy="224" r="15" fill="url(#blueGlow)"/>
+
+            <rect x="76" y="228" width="28" height="56" rx="14" fill="url(#bodyWhite)" stroke="#b7c9f1" stroke-width="2"/>
+            <rect x="122" y="228" width="28" height="56" rx="14" fill="url(#bodyWhite)" stroke="#b7c9f1" stroke-width="2"/>
+            <rect x="68" y="278" width="42" height="12" rx="6" fill="#2a73ff"/>
+            <rect x="116" y="278" width="42" height="12" rx="6" fill="#2a73ff"/>
+          </svg>
+        </div>
+
+        <div class="bubble">
+          <strong>Hi! I’m Sky🤖</strong>
+          Type your travel plan above<br>
+          and I’ll guide you step by step.
+        </div>
+      </div>
+    </section>
+
+    <section id="results" class="screen">
+      <div class="top-pills">
+        <div class="pill" id="requestPreview">Request: —</div>
+        <div class="pill" id="destinationPill">Destination: —</div>
+      </div>
+
+      <div class="card">
+        <h2>Flight Options</h2>
+        <div id="flightsContainer"></div>
+      </div>
+
+      <div class="actions">
+        <button class="half" id="bestFlightBtn">See Best Recommendation</button>
+        <button class="half secondary" id="backHomeBtn1">Back</button>
+      </div>
+    </section>
+
+    <section id="summary" class="screen">
+      <div class="card summary">
+        <h2>Your AI Recommendation</h2>
+        <div id="summaryContent"></div>
+        <div class="note">This AI assistant uses simulated data only and is for educational purposes in compliance with MOE guidelines.</div>
+        <div class="saved-list" id="savedList"></div>
+      </div>
+
+      <div class="actions">
+        <button class="half" id="saveTripBtn">Save Result</button>
+        <button class="half secondary" id="backHomeBtn2">Start Again</button>
+      </div>
+    </section>
+
+    <div class="cloud-back"></div>
+    <div class="cloud-front"></div>
+  </div>
+</div>
+
+<script>
+const screens = {
+  home: document.getElementById('home'),
+  results: document.getElementById('results'),
+  summary: document.getElementById('summary')
+};
+
+const requestInput = document.getElementById('requestInput');
+const requestPreview = document.getElementById('requestPreview');
+const destinationPill = document.getElementById('destinationPill');
+const flightsContainer = document.getElementById('flightsContainer');
+const summaryContent = document.getElementById('summaryContent');
+const savedList = document.getElementById('savedList');
+
+let currentDestination = '';
+let currentRequest = '';
+let currentFlights = [];
+let bestFlight = null;
+
+const flightData = {
+  london: [
+    {airline:'Emirates', price:'AED 2,450', duration:'7h 30m', baggage:'23kg checked + 7kg cabin', why:'Good family-friendly baggage and direct flight.'},
+    {airline:'British Airways', price:'AED 2,180', duration:'7h 45m', baggage:'23kg checked + 7kg cabin', why:'Lower price with clear baggage rules.'},
+    {airline:'Qatar Airways', price:'AED 1,980', duration:'10h 20m', baggage:'25kg checked + 7kg cabin', why:'Best price, but it includes one stop.'}
+  ],
+  seoul: [
+    {airline:'Korean Air', price:'AED 3,150', duration:'8h 40m', baggage:'23kg checked + 10kg cabin', why:'Direct and comfortable option.'},
+    {airline:'Etihad', price:'AED 2,940', duration:'9h 10m', baggage:'25kg checked + 7kg cabin', why:'Good baggage and balanced price.'},
+    {airline:'Turkish Airlines', price:'AED 2,620', duration:'13h 00m', baggage:'30kg checked + 8kg cabin', why:'Best baggage allowance, but longer travel time.'}
+  ],
+  paris: [
+    {airline:'Air France', price:'AED 2,300', duration:'7h 10m', baggage:'23kg checked + 12kg cabin', why:'Direct route and easy baggage policy.'},
+    {airline:'Emirates', price:'AED 2,520', duration:'7h 05m', baggage:'25kg checked + 7kg cabin', why:'Fast direct flight with strong service.'},
+    {airline:'Lufthansa', price:'AED 2,050', duration:'9h 40m', baggage:'23kg checked + 8kg cabin', why:'Lower price but includes one stop.'}
+  ],
+  istanbul: [
+    {airline:'Turkish Airlines', price:'AED 1,420', duration:'4h 40m', baggage:'30kg checked + 8kg cabin', why:'Great baggage and direct flight.'},
+    {airline:'Flydubai', price:'AED 1,180', duration:'4h 55m', baggage:'20kg checked + 7kg cabin', why:'Budget-friendly option.'},
+    {airline:'Emirates', price:'AED 1,590', duration:'4h 45m', baggage:'25kg checked + 7kg cabin', why:'Simple booking and trusted airline.'}
+  ],
+  tokyo: [
+    {airline:'Japan Airlines', price:'AED 3,460', duration:'9h 25m', baggage:'23kg checked + 10kg cabin', why:'Direct and very user-friendly option.'},
+    {airline:'Emirates', price:'AED 3,180', duration:'9h 50m', baggage:'25kg checked + 7kg cabin', why:'Strong balance between comfort and baggage.'},
+    {airline:'Cathay Pacific', price:'AED 2,880', duration:'12h 35m', baggage:'23kg checked + 7kg cabin', why:'Cheaper, but one-stop travel.'}
+  ],
+  cairo: [
+    {airline:'EgyptAir', price:'AED 1,260', duration:'3h 50m', baggage:'23kg checked + 8kg cabin', why:'Simple direct option.'},
+    {airline:'Etihad', price:'AED 1,380', duration:'4h 10m', baggage:'25kg checked + 7kg cabin', why:'Clear baggage explanation and trusted support.'},
+    {airline:'Air Arabia', price:'AED 980', duration:'4h 05m', baggage:'20kg checked + 10kg cabin', why:'Lowest price with decent cabin baggage.'}
+  ]
+};
+
+function showScreen(name){
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  screens[name].classList.add('active');
+}
+
+function detectDestination(text){
+  const lower = (text || '').toLowerCase();
+  const list = ['london','seoul','paris','istanbul','tokyo','cairo'];
+  for (const item of list){
+    if(lower.includes(item)) return item;
+  }
+  return 'london';
+}
+
+function getFlights(){
+  currentRequest = requestInput.value.trim();
+  currentDestination = detectDestination(currentRequest);
+  currentFlights = flightData[currentDestination];
+  bestFlight = pickBestFlight(currentFlights);
+
+  requestPreview.textContent = 'Request: ' + (currentRequest || 'I want a flight to London for 2 adults on 20 June');
+  destinationPill.textContent = 'Destination: ' + currentDestination.charAt(0).toUpperCase() + currentDestination.slice(1);
+
+  flightsContainer.innerHTML = '';
+  currentFlights.forEach(flight => {
+    const div = document.createElement('div');
+    div.className = 'flight';
+    div.innerHTML = `
+      <div class="flight-top">
+        <div>
+          <h3>${flight.airline}</h3>
+          <div class="meta">Duration: ${flight.duration}<br>Baggage: ${flight.baggage}</div>
+        </div>
+        <div class="price">${flight.price}</div>
+      </div>
+      <div class="why"><strong>AI note:</strong> ${flight.why}</div>
+    `;
+    flightsContainer.appendChild(div);
+  });
+
+  showScreen('results');
+}
+
+function pickBestFlight(flights){
+  const direct = flights.find(f => !f.why.toLowerCase().includes('one stop') && !f.why.toLowerCase().includes('one-stop'));
+  return direct || flights[0];
+}
+
+function showRecommendation(){
+  const dest = currentDestination.charAt(0).toUpperCase() + currentDestination.slice(1);
+  summaryContent.innerHTML = `
+    <p><strong>Best option for your trip to ${dest}:</strong></p>
+    <ul>
+      <li><strong>Airline:</strong> ${bestFlight.airline}</li>
+      <li><strong>Price:</strong> ${bestFlight.price}</li>
+      <li><strong>Duration:</strong> ${bestFlight.duration}</li>
+      <li><strong>Baggage:</strong> ${bestFlight.baggage}</li>
+    </ul>
+    <p><strong>Why SkyHelper AI recommends this flight:</strong></p>
+    <p>${bestFlight.why} It gives a clearer booking experience and helps users compare flights more confidently.</p>
+    <p><strong>Note:</strong> This is a prototype only. It does not make real bookings or process payments.</p>
+  `;
+  renderSavedResults();
+  showScreen('summary');
+}
+
+function saveResult(){
+  const saved = JSON.parse(localStorage.getItem('skyhelper_results_theme') || '[]');
+  saved.unshift({
+    request: currentRequest || 'Flight request',
+    destination: currentDestination,
+    airline: bestFlight.airline,
+    price: bestFlight.price
+  });
+  localStorage.setItem('skyhelper_results_theme', JSON.stringify(saved.slice(0,5)));
+  renderSavedResults();
+  alert('Saved successfully.');
+}
+
+function renderSavedResults(){
+  const saved = JSON.parse(localStorage.getItem('skyhelper_results_theme') || '[]');
+  if(!saved.length){
+    savedList.innerHTML = '';
+    return;
+  }
+  savedList.innerHTML = '<h3 style="margin:18px 0 10px;color:#274273">Saved Results</h3>' + saved.map(item => `
+    <div class="saved-item">
+      <strong>${item.destination.charAt(0).toUpperCase() + item.destination.slice(1)}</strong> — ${item.airline} — ${item.price}
+    </div>
+  `).join('');
+}
+
+document.getElementById('getFlightsBtn').addEventListener('click', getFlights);
+document.getElementById('bestFlightBtn').addEventListener('click', showRecommendation);
+document.getElementById('backHomeBtn1').addEventListener('click', () => showScreen('home'));
+document.getElementById('backHomeBtn2').addEventListener('click', () => showScreen('home'));
+document.getElementById('saveTripBtn').addEventListener('click', saveResult);
+requestInput.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') getFlights();
+});
+</script>
+</body>
+</html>
